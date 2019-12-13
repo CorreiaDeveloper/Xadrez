@@ -15,6 +15,19 @@ namespace xadrez_console
 
                 while (!partida.terminada)
                 {
+
+                    //meu código
+                    if (partida.promocao)
+                    {
+                        Console.WriteLine("Peão promovido! Escolha um número:");
+                        Console.WriteLine("1 - Dama");
+                        Console.WriteLine("2 - Bispo");
+                        Console.WriteLine("3 - Torre");
+                        Console.WriteLine("4 - Cavalo");
+
+                        string s = Console.ReadLine();
+                        partida.escolhaPromocao(s);
+                    }
                     try
                     {
                         Console.Clear();

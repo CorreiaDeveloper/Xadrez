@@ -6,6 +6,9 @@ namespace xadrez
 {
     class PartidaDeXadrez
     {
+        public bool promocao { get; private set; }
+        public Peca pecaPromocao { get; private set; }
+        public Posicao posicaoPecaPromocao { get; private set; }
         public Tabuleiro tab { get; private set; }
         public int turno { get; private set; }
         public Cor jogadorAtual { get; private set; }
@@ -26,6 +29,9 @@ namespace xadrez
             pecas = new HashSet<Peca>();
             capturadas = new HashSet<Peca>();
             colocarPecas();
+            promocao = false;
+            pecaPromocao = null;
+            posicaoPecaPromocao = new Posicao(0, 0);
         }
 
         public Peca executaMovimento(Posicao origem, Posicao destino)
@@ -78,6 +84,46 @@ namespace xadrez
             }
 
             return pecaCapturada;
+        }
+
+        public void escolhaPromocao(string s)
+        {
+            pecaPromocao = tab.retirarPeca(posicaoPecaPromocao);
+            pecas.Remove(pecaPromocao);
+            Peca p;
+            int i = 0;
+            if (int.TryParse(s, out i))
+            {
+                switch (i)
+                {
+                    case 1:
+                        p = new Dama(tab, pecaPromocao.cor);
+                        break;
+                    case 2:
+                        p = new Bispo(tab, pecaPromocao.cor);
+                        break;
+                    case 3:
+                        p = new Torre(tab, pecaPromocao.cor);
+                        break;
+                    case 4:
+                        p = new Cavalo(tab, pecaPromocao.cor);
+                        break;
+                    default:
+                        p = new Dama(tab, pecaPromocao.cor);
+                        break;
+                }
+                tab.colocarPeca(p, posicaoPecaPromocao);
+                pecas.Add(p);
+                promocao = false;
+            }
+            else
+            {
+                p = new Dama(tab, pecaPromocao.cor);
+                tab.colocarPeca(p, posicaoPecaPromocao);
+                pecas.Add(p);
+                promocao = false;
+                throw new TabuleiroException("Valor digitado não é um número óu é inválido! Peça será uma Dama!");
+            }
         }
 
         public void desfazMovimento(Posicao origem, Posicao destino, Peca pecaCapturada)
@@ -140,6 +186,25 @@ namespace xadrez
                 desfazMovimento(origem, destino, pecaCapturada);
                 throw new TabuleiroException("Você não pode se colocar em xeque!");
             }
+
+            Peca p = tab.peca(destino);
+            //#jogadaEspecial: Promoção
+
+            pecaPromocao = tab.peca(destino);
+            posicaoPecaPromocao = destino;
+
+            if (pecaPromocao is Peao)
+            {
+                if (pecaPromocao.cor == Cor.Branca && destino.linha == 0 || pecaPromocao.cor == Cor.Preta && destino.linha == 7)
+                {
+                    promocao = true;
+                }
+            }
+            else
+            {
+                promocao = false;
+            }
+
             if (estaEmXeque(adversaria(jogadorAtual)))
             {
                 xeque = true;
@@ -159,9 +224,6 @@ namespace xadrez
             turno++;
             mudaJogador();
             }
-
-            Peca p = tab.peca(destino);
-
             //#jogadaEspecial: En Passant
             if (p is Peao && (destino.linha == origem.linha - 2 || destino.linha == origem.linha + 2))
             {
